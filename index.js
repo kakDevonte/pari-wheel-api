@@ -87,7 +87,7 @@ app.put("/api/referrals/", (req, res, next) => {
         res.status(400).json({ error: res.message });
         return;
       }
-      res.status(200).json({ result });
+      res.status(200).json(result);
     }
   );
 });
@@ -148,13 +148,18 @@ app.put("/api/users/", (req, res, next) => {
       reqBody.points,
       reqBody.tryCount,
       reqBody.telegram_id,
-    ],
-    function (err, result) {
+    ]
+  );
+
+  db.get(
+    `SELECT * FROM users where telegram_id = ?`,
+    reqBody.telegram_id,
+    (err, row) => {
       if (err) {
-        res.status(400).json({ error: res.message });
+        res.status(400).json({ error: err.message });
         return;
       }
-      res.status(200).json({ result });
+      res.status(200).json(row);
     }
   );
 });
