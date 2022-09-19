@@ -15,7 +15,7 @@ app.use(
 
 const db = new sqlite3.Database("./wheel_db.db", (err) => {
   if (err) {
-    console.error("Erro opening database " + err.message);
+    console.error("Error opening database " + err.message);
   } else {
     db.run(
       `CREATE TABLE  IF NOT EXISTS users(
@@ -28,12 +28,68 @@ const db = new sqlite3.Database("./wheel_db.db", (err) => {
         if (err) {
           console.log("Table already exists. ", err);
         }
-        // let insert =
-        //   "INSERT INTO users (telegram_id, telegram_username, points, tryCount) VALUES (?,?,?,?)";
-        // db.run(insert, [1234213421, "Devonte", 10, 5]);
+      }
+    );
+    db.run(
+      `CREATE TABLE  IF NOT EXISTS referrals(
+            referrer_id INTEGER PRIMARY KEY NOT NULL,
+            referral_id INTEGER NOT NULL,
+            is_active INTEGER NOT NULL
+        )`,
+      (err) => {
+        if (err) {
+          console.log("Table already exists. ", err);
+        }
       }
     );
   }
+});
+
+app.get("/api/referrals/:id", (req, res, next) => {
+  const params = [req.params.id];
+  db.get(
+    `SELECT * FROM referrals where referrer_id = ?`,
+    [req.params.id],
+    (err, row) => {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      res.status(200).json(row);
+    }
+  );
+});
+
+app.post("/api/referrals/", (req, res, next) => {
+  const reqBody = req.body;
+  db.run(
+    `INSERT INTO referrals (referrer_id, referral_id, is_active) VALUES (?,?,?)`,
+    [reqBody.referrer_id, reqBody.referral_id, reqBody.is_active],
+    function (err, result) {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      res.status(201).json({
+        referrer_id: this.lastID,
+      });
+    }
+  );
+});
+
+app.put("/api/referrals/", (req, res, next) => {
+  const reqBody = req.body;
+  db.run(
+    `UPDATE referrals set referral_id = ?, is_active = ? WHERE referrer_id = ?`,
+    [reqBody.referral_id, reqBody.is_active, reqBody.referrer_id],
+    function (err, result) {
+      if (err) {
+        res.status(400).json({ error: res.message });
+        return;
+      }
+      res.status(200).json({ result });
+    }
+  );
 });
 
 app.get("/api/users/:id", (req, res, next) => {
